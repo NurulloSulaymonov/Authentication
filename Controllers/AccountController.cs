@@ -1,32 +1,27 @@
 ﻿using Auth.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Auth.Data;
 
 namespace Auth.Controllers
 {
     public class AccountController : Controller
     {
         List<User> users;
-        public AccountController(IHttpContextAccessor httpContextAccessor)
+        private readonly SignInManager<User> _signInManager;
+        private readonly UserManager<User> _userManager;
+
+
+        public AccountController(SignInManager<User> signInManager,
+            UserManager<User> userManager)
         {
-            users = new List<User>
-            {
-            new Models.User
-            {
-                Password = "khayriddin",
-                Username="khayriddin@gmail.com",
-                Role= "Admin"
-            },
-            new Models.User
-            {
-                Password = "nurullo",
-                Username="nurullo@gmail.com",
-                Role = "Manager"
-            }
-        };
+            _signInManager = signInManager;
+            _userManager = userManager;
         }
+
         public IActionResult Index()
         {
             return View();
@@ -35,44 +30,43 @@ namespace Auth.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-
             return View(new UserViewModel());
         }
 
         [HttpPost]
-        public IActionResult Login(UserViewModel model)
+        public async Task<IActionResult> LoginAsync(UserViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var user = users.FirstOrDefault(x => x.Password == model.Password && x.Username == model.Username);
+                var user = await _userManager.FindByEmailAsync(model.Username);
+
                 if (user == null) return View(model);
 
-                 // claim is the information about a user 
-                 //example Name, PhoneNumber, Email, Role 
+                var exists = await _userManager.CheckPasswordAsync(user, model.Password);
+
+                if (exists == false) return View(model);
+
+                var userClaims = await _userManager.GetRolesAsync(user);
+
+                // claim is the information about a user 
+                //example Name, PhoneNumber, Email, Role 
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.Name, model.Username),
-                    new Claim(ClaimTypes.Role, user.Role)
                 };
-
-                var driverClaims = new List<Claim>
+                //add roles to claim
+                foreach (var userClaim in userClaims)
                 {
-                    new Claim(ClaimTypes.Name, model.Username),
-                    new Claim(ClaimTypes.Role, user.Role)
-                };
+                    claims.Add(new Claim(ClaimTypes.Role, userClaim));
+                }
 
-                ClaimsIdentity driverIdentity = new ClaimsIdentity(claims, "Cookies");
-                ClaimsIdentity claimsIdentity = new ClaimsIdentity(driverClaims, "Cookies");
+                await _userManager.AddClaimsAsync(user, claims);
+                await _signInManager.SignInAsync(user, model.RememberMe);
 
-                ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(new [] { claimsIdentity,driverIdentity });
-                HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
                 return RedirectToAction("Index", "Home");
-            
             }
 
             return View(model);
-
-
         }
 
         public IActionResult AccessDenied()
@@ -80,10 +74,35 @@ namespace Auth.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View(new UserRegisterViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(UserRegisterViewModel model)
+        {
+            if (ModelState.IsValid == false) return View(model);
+
+            var user = new User()
+            {
+                UserName = model.Username,
+                Email = model.Username
+            };
+
+            var response  = await _userManager.CreateAsync(user,model.Password);
+
+            if (response.Succeeded) return RedirectToAction("Index","Home");
+            
+            ModelState.AddModelError("Username",response.Errors.First().Description);
+            return View(model);
+        }
+
         public async Task<IActionResult> LogOutAsync()
         {
-            await HttpContext.SignOutAsync();
-           return RedirectToAction("Index", "Home");
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Index", "Home");
         }
     }
 }

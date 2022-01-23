@@ -7,7 +7,7 @@ namespace Auth.Data
 {
 
     
-    public class DataContext : IdentityDbContext<IdentityUser, IdentityRole, string>
+    public class DataContext : IdentityDbContext<User, IdentityRole, string>
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {

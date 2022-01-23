@@ -2,19 +2,15 @@
 
 namespace Auth.Models
 {
-    public class User
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string Role { get; set; }
-    }
-
-    public class UserViewModel
+    public class UserRegisterViewModel
     {
         [Required(ErrorMessage = "Please fill up username")]
         public string Username { get; set; }
+
         [Required(ErrorMessage = "Please fill up password")]
         public string Password { get; set; }
-        public bool RememberMe { get; set; }
+        
+        [Compare("Password",ErrorMessage ="your password does not match")]
+        public string ConfirmPassword { get; set; }
     }
 }

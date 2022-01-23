@@ -1,7 +1,12 @@
-﻿using Auth.Data;
+﻿using System;
+using Auth.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +17,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddIdentity<IdentityUser,IdentityRole>(
+builder.Services.AddIdentity<User,IdentityRole>(
     options => options.SignIn.RequireConfirmedAccount = false)
     .AddEntityFrameworkStores<DataContext>();
 
