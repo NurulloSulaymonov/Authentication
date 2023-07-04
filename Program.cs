@@ -1,12 +1,7 @@
-﻿using System;
-using Auth.Data;
+﻿using Auth.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,45 +12,18 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddIdentity<User,IdentityRole>(
-    options => options.SignIn.RequireConfirmedAccount = false)
-    .AddEntityFrameworkStores<DataContext>();
-
-builder.Services.Configure<IdentityOptions>(options =>
-{
-    // Password settings.
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequiredUniqueChars = 1;
-
-    // Lockout settings.
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.AllowedForNewUsers = true;
-
-    // User settings.
-    options.User.AllowedUserNameCharacters =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-    options.User.RequireUniqueEmail = false;
-});
-
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(option =>
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,option =>
     {
         option.LoginPath = "/account/login";
         option.AccessDeniedPath = "/account/accessDenied";
         option.Cookie.Name = "AuthCookie";
 
-        option.ExpireTimeSpan = TimeSpan.FromMinutes(2);
+        option.ExpireTimeSpan = TimeSpan.FromHours(2);
 
     });
-builder.Services.AddAuthorization();
 
-builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
@@ -68,7 +36,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
 app.UseAuthentication();

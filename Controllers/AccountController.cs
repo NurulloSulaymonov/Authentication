@@ -10,62 +10,62 @@ namespace Auth.Controllers
 {
     public class AccountController : Controller
     {
-        List<User> users;
-        private readonly SignInManager<User> _signInManager;
-        private readonly UserManager<User> _userManager;
-
-
-        public AccountController(SignInManager<User> signInManager,
-            UserManager<User> userManager)
-        {
-            _signInManager = signInManager;
-            _userManager = userManager;
-        }
-
+        
         public IActionResult Index()
         {
             return View();
         }
 
         [HttpGet]
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl)
         {
-            return View(new UserViewModel());
+            return View(new UserViewModel()
+            {
+                ReturnUrl = returnUrl
+            });
         }
 
         [HttpPost]
         public async Task<IActionResult> LoginAsync(UserViewModel model)
         {
-            if (ModelState.IsValid)
+            if (model.Username == "alijon" && model.Password == "1234")
             {
-                var user = await _userManager.FindByEmailAsync(model.Username);
-
-                if (user == null) return View(model);
-
-                var exists = await _userManager.CheckPasswordAsync(user, model.Password);
-
-                if (exists == false) return View(model);
-
-                var userClaims = await _userManager.GetRolesAsync(user);
-
-                // claim is the information about a user 
-                //example Name, PhoneNumber, Email, Role 
-                var claims = new List<Claim>
+                //fill claims  - 
+                var claims = new List<Claim>()
                 {
-                    new Claim(ClaimTypes.Name, model.Username),
+                    new Claim(ClaimTypes.Name, "Alijon"),
+                    new Claim(ClaimTypes.Email, "alijon@gmail.com"),
+                    new Claim(ClaimTypes.Role, "Manager"),
+                    new Claim(ClaimTypes.DateOfBirth,"2005.02.02"),
+                    new Claim("Tax","2345654"),
+                    
                 };
-                //add roles to claim
-                foreach (var userClaim in userClaims)
+                
+                //create identity 
+                var userIdentity = new ClaimsIdentity(claims,"Cookies");
+               
+                // create principal
+                var userPrincipal = new ClaimsPrincipal(userIdentity);
+
+                await  HttpContext.SignInAsync(
+                    "Cookies",
+                    userPrincipal, 
+                    new AuthenticationProperties
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, userClaim));
+                    ExpiresUtc = DateTime.UtcNow.AddMinutes(10),
+                    IsPersistent = true,
+                });
+                if (string.IsNullOrEmpty(model.ReturnUrl))
+                {
+                  return Redirect("/home/index");
                 }
-
-                await _userManager.AddClaimsAsync(user, claims);
-                await _signInManager.SignInAsync(user, model.RememberMe);
-
-                return RedirectToAction("Index", "Home");
+                else
+                {
+                    return Redirect(model.ReturnUrl);
+                }
+               
             }
-
+        
             return View(model);
         }
 
@@ -73,35 +73,11 @@ namespace Auth.Controllers
         {
             return View();
         }
-
-        [HttpGet]
-        public IActionResult Create()
-        {
-            return View(new UserRegisterViewModel());
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create(UserRegisterViewModel model)
-        {
-            if (ModelState.IsValid == false) return View(model);
-
-            var user = new User()
-            {
-                UserName = model.Username,
-                Email = model.Username
-            };
-
-            var response  = await _userManager.CreateAsync(user,model.Password);
-
-            if (response.Succeeded) return RedirectToAction("Index","Home");
-            
-            ModelState.AddModelError("Username",response.Errors.First().Description);
-            return View(model);
-        }
+        
 
         public async Task<IActionResult> LogOutAsync()
         {
-            await _signInManager.SignOutAsync();
+            await HttpContext.SignOutAsync("Cookies");
             return RedirectToAction("Index", "Home");
         }
     }

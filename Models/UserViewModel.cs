@@ -10,5 +10,6 @@ namespace Auth.Models
         [Required(ErrorMessage = "Please fill up password")]
         public string Password { get; set; }
         public bool RememberMe { get; set; }
+        public string? ReturnUrl { get; set; }
     }
 }

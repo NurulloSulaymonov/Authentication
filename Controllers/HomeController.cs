@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Auth.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 
@@ -15,13 +16,13 @@ public class HomeController : Controller
         _logger = logger;
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(AuthenticationSchemes = "Cookies")]
     public IActionResult Secret()
     {
         return View();
     }
 
-    [Authorize(Roles = "Manager")]
+    [Authorize(AuthenticationSchemes = "Cookies", Roles = "Manager"),]
     public IActionResult OnlyManager()
     {
         return View();
@@ -36,10 +37,5 @@ public class HomeController : Controller
     {
         return View();
     }
-
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-    }
+    
 }
