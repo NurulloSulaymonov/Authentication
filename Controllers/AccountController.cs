@@ -52,7 +52,7 @@ namespace Auth.Controllers
                     userPrincipal, 
                     new AuthenticationProperties
                 {
-                    ExpiresUtc = DateTime.UtcNow.AddMinutes(10),
+                    ExpiresUtc = DateTime.UtcNow.AddSeconds(20),
                     IsPersistent = true,
                 });
                 if (string.IsNullOrEmpty(model.ReturnUrl))
@@ -74,7 +74,6 @@ namespace Auth.Controllers
             return View();
         }
         
-
         public async Task<IActionResult> LogOutAsync()
         {
             await HttpContext.SignOutAsync("Cookies");
