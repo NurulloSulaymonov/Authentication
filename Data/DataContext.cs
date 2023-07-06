@@ -7,13 +7,14 @@ namespace Auth.Data
 {
 
     
-    public class DataContext : IdentityDbContext<User, IdentityRole, string>
+    public class DataContext : IdentityDbContext
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options)
         {
 
         }
 
-        DbSet<Teacher> Teachers {get;set;}
+        public DbSet<Teacher> Teachers {get;set;}
+        
     }
 }

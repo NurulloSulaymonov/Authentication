@@ -17,13 +17,13 @@ public class HomeController : Controller
         _logger = logger;
     }
 
-    [Authorize(AuthenticationSchemes = "Cookies")]
+    [Authorize]
     public IActionResult Secret()
     {
         return View();
     }
 
-    [Authorize(AuthenticationSchemes = "Cookies", Roles = "Manager"),]
+    [Authorize(Roles = "Manager"),]
     public IActionResult OnlyManager()
     {
         return View();

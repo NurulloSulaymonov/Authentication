@@ -9,11 +9,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseNpgsql(connectionString));
 
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(config =>
+    {
+        config.Password.RequiredLength = 4;
+    })
+    .AddEntityFrameworkStores<DataContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication("Cookies")
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,option =>
     {
         option.LoginPath = "/account/login";
